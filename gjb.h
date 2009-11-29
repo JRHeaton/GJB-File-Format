@@ -2,11 +2,12 @@
 #include <sys/types.h>
 
 #define GJB_STR_MAX 64
+#define GJB_DESC_MAX 128
 
 struct gjb_header {
 	char name[GJB_STR_MAX];
 	char author[GJB_STR_MAX];
-	char description[GJB_STR_MAX];
+	char description[GJB_DESC_MAX];
 	u_int64_t entry_count;
 };
 
@@ -39,6 +40,8 @@ gjb_header_t gjb_header_read(FILE *stream);
 gjb_manifest_t gjb_manifest_read(FILE *stream, gjb_file_t file);
 unsigned int gjb_manifest_write(FILE *stream, gjb_manifest_t manifest, gjb_header_t header); 
 unsigned int gjb_manifest_add_entry(gjb_manifest_t manifest, struct gjb_manifest_entry *entry, gjb_header_t header);
+gjb_manifest_t gjb_manifest_create();
+void gjb_manifest_release(gjb_manifest_t manifest, u_int64_t entries);
 
 struct gjb_manifest_entry *gjb_manifest_entry_create(char *name, u_int64_t size);
 void gjb_manifest_entry_release(struct gjb_manifest_entry *entry);

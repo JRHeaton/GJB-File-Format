@@ -26,7 +26,6 @@ unsigned int gjb_file_write(FILE *stream, gjb_file_t file) {
 	return 1;
 }
 
-
 unsigned int gjb_header_write(gjb_header_t header, FILE *stream) {
 	rewind(stream);
 	size_t write_ret = fwrite((void *)header, sizeof(struct gjb_header), 1, stream);
@@ -49,7 +48,7 @@ gjb_header_t gjb_header_create(char *name, char *author, char *description, u_in
 	
 	strncpy(header->name, name, GJB_STR_MAX);
 	strncpy(header->author, author, GJB_STR_MAX);
-	strncpy(header->description, description, GJB_STR_MAX);
+	strncpy(header->description, description, GJB_DESC_MAX);
 	header->entry_count = entry_count;
 	
 	return header;
@@ -82,6 +81,23 @@ gjb_manifest_t gjb_manifest_read(FILE *stream, gjb_file_t file) {
 	return manifest;
 }
 
+gjb_manifest_t gjb_manifest_create() {
+	gjb_manifest_t manifest = malloc(sizeof(gjb_manifest_t));
+	
+	return manifest;
+}
+
+void gjb_manifest_release(gjb_manifest_t manifest, u_int64_t entries) {
+	if(!manifest) return;
+	
+	u_int64_t i;
+	for(i=0;i<entries;++i) {
+		if(manifest[i]) free(manifest[i]);
+	}
+	
+	free(manifest);
+}
+
 unsigned int gjb_manifest_write(FILE *stream, gjb_manifest_t manifest, gjb_header_t header) {
 	if(!stream || !manifest || !header) return 0;
 	
@@ -100,8 +116,13 @@ unsigned int gjb_manifest_add_entry(gjb_manifest_t manifest, struct gjb_manifest
 	if(!entry || !header) return 0;
 	
 	u_int64_t i = header->entry_count;
-	manifest[i] = calloc(1, sizeof(struct gjb_manifest_entry));
-	memcpy(manifest[i], entry, sizeof(struct gjb_manifest_entry));
+	
+	printf("There are %d entries in the manifest\nNew size: %d\n", i, sizeof(struct gjb_manifest_entry *) * i);
+	
+	manifest = realloc(manifest, i * sizeof(struct gjb_manifest_entry *));
+	printf("Reallocated\n");
+	manifest[i-1] = calloc(1, sizeof(struct gjb_manifest_entry));
+	manifest[i-1] = entry;
 	
 	return 1;
 }
