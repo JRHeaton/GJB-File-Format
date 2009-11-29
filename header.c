@@ -7,12 +7,14 @@ unsigned int gjb_header_write(struct gjb_header *header, FILE *stream) {
 	return write_ret;
 }
 
-struct gjb_header *gjb_header_read(FILE *stream) {
+struct gjb_header *gjb_header_read(FILE *stream, gjb_file_t file) {
 	rewind(stream);
 	struct gjb_header *header;
 	
 	size_t read_ret = fread((void *)header, sizeof(gjb_header), 1, stream);
 	if(!read_ret) return NULL;
+	
+	file.header = header;
 	
 	return header;
 }
