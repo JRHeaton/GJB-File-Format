@@ -21,7 +21,7 @@ unsigned int gjb_file_write(FILE *stream, gjb_file_t file) {
 	if(!stream || !file) return 0;
 	
 	gjb_header_write(file->header, stream);
-	gjb_manifest_write(stream, file->manifest, file);
+	gjb_manifest_write(stream, file->manifest, file->header);
 	
 	return 1;
 }
@@ -47,9 +47,9 @@ gjb_header_t gjb_header_read(FILE *stream) {
 gjb_header_t gjb_header_create(char *name, char *author, char *description, u_int64_t entry_count) {
 	gjb_header_t header = calloc(1, sizeof(struct gjb_header));
 	
-	strncpy(header->name, name, HEADER_STR_MAX);
-	strncpy(header->author, author, HEADER_STR_MAX);
-	strncpy(header->description, description, HEADER_STR_MAX);
+	strncpy(header->name, name, GJB_STR_MAX);
+	strncpy(header->author, author, GJB_STR_MAX);
+	strncpy(header->description, description, GJB_STR_MAX);
 	header->entry_count = entry_count;
 	
 	return header;
@@ -82,13 +82,13 @@ gjb_manifest_t gjb_manifest_read(FILE *stream, gjb_file_t file) {
 	return manifest;
 }
 
-unsigned int gjb_manifest_write(FILE *stream, gjb_manifest_t manifest, gjb_file_t file) {
-	if(!stream || !manifest || !file) return 0;
-	if(!file->header) return 0;
+unsigned int gjb_manifest_write(FILE *stream, gjb_manifest_t manifest, gjb_header_t header) {
+	if(!stream || !manifest || !header) return 0;
 	
 	fseek(stream, sizeof(struct gjb_header), SEEK_SET);
-	u_int64_t i;
-	for(i=0;i<file->header->entry_count;++i) {
+	
+	u_int64_t i, entries=header->entry_count;
+	for(i=0;i<entries;++i) {
 		size_t write_ret = fwrite(manifest[i], sizeof(struct gjb_manifest_entry), 1, stream);
 		if(!write_ret) return 0;
 	}
@@ -100,18 +100,15 @@ unsigned int gjb_manifest_add_entry(gjb_manifest_t manifest, struct gjb_manifest
 	if(!entry || !header) return 0;
 	
 	u_int64_t i = header->entry_count;
-	printf("entry: %d\n", i);
 	manifest[i] = calloc(1, sizeof(struct gjb_manifest_entry));
-	printf("allocated %d bytes\n", sizeof(struct gjb_manifest_entry));
 	memcpy(manifest[i], entry, sizeof(struct gjb_manifest_entry));
-	printf("Memory copied to manifest\n");
 	
 	return 1;
 }
 
 struct gjb_manifest_entry *gjb_manifest_entry_create(char *name, u_int64_t size) {
 	struct gjb_manifest_entry *entry = calloc(1, sizeof(struct gjb_manifest_entry));
-	strncpy(entry->name, name, 128);
+	strncpy(entry->name, name, GJB_STR_MAX);
 	entry->size = size;
 	
 	return entry;

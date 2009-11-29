@@ -13,12 +13,13 @@ int fsize(char *path) {
 
 int main(int argc, char *argv[]) {
 	gjb_header_t header = gjb_header_create("My Test File", "Gojohnnyboi", "A test GJB file", 0);
-	gjb_manifest_t manifest;
+	gjb_manifest_t manifest = malloc(sizeof(struct gjb_manifest_entry *) * 37);
 	
 	DIR *dir = opendir(argv[1]);
 	struct dirent *dp;
 	
 	printf("Let's enumerate %s\n", argv[1]);
+	int i = header->entry_count;
 	while((dp = readdir(dir)) != NULL) {
 		if(strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
 			continue;
@@ -32,16 +33,22 @@ int main(int argc, char *argv[]) {
 		printf("Increased header entry count\n");
 		gjb_manifest_entry_release(entry);
 		printf("Released entry\n");
+		
+		++i;
 	}
 	
 	closedir(dir);
 	
+	printf("%d\n", i);
 	printf("Phew, got past the directory crap\n");
 	
 	FILE *f = fopen(argv[2], "w+");
 	
 	gjb_file_t file = gjb_file_create(header, manifest);
+	printf("created\n");
 	gjb_file_write(f, file);
+	
+	printf("written\n");
 	gjb_file_release(file);
 	
 	gjb_header_release(header);
