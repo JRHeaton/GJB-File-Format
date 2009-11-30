@@ -158,10 +158,7 @@ gjb_file_t gjb_file_read(FILE *stream) {
 		size_t read_ret = fread(file->files[i], file->manifest->entries[i].size, 1, stream);
 		offset += file->manifest->entries[i].size;
 		if(!read_ret) {
-			free(file->header);
-			free(file->manifest);
-			free(file->files);
-			free(file);
+			gjb_file_release(file);
 			
 			return NULL;
 		}
@@ -183,7 +180,7 @@ unsigned int gjb_file_add_file(gjb_file_t file, FILE *stream, char *name, u_int6
 	if(!file || !stream || !file->header || !file->manifest || !name) return 0;
 	
 	unsigned char *data = malloc(size);
-	size_t read_ret = fread(data, size, 1, stream);
+	size_t read_ret = fread(data, (size_t)size, 1, stream);
 	if(!read_ret) return 0;
 	
 	file->header->entry_count++;
