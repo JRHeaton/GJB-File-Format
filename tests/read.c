@@ -17,7 +17,7 @@ void print_manifest(gjb_manifest_t manifest) {
 	printf("------------------------\n");
 	int i;
 	for(i=0;i<manifest->count;++i) {
-		printf("%d: %s; size: %d\n", i, manifest->entries[i].name, manifest->entries[i].size);
+		printf("%d: %s; size: %llu\n", i, manifest->entries[i].name, manifest->entries[i].size);
 	}
 	printf("------------------------\n");
 }
@@ -26,21 +26,22 @@ int main(int argc, char *argv[]) {
 	FILE *stream = fopen(argv[1], "r");
 	if(!stream) return 1;
 	
-	gjb_file_t file;
+	gjb_file_t file = gjb_file_read(stream);
 	
-	gjb_header_t header = gjb_header_read(stream);
-	if(header) print_header(header);
+	if(file->header) print_header(file->header);
 	
-	gjb_manifest_t manifest = gjb_manifest_read(stream, header);
-	if(manifest) {
-		file = gjb_file_create(header, manifest);
-		print_manifest(manifest);
+	if(file->manifest) {
+		print_manifest(file->manifest);
 	}
 	
-	gjb_header_release(header);
-	gjb_manifest_release(manifest);
-	gjb_file_release(file);
+	int i;
+	for(i=0;i<file->header->entry_count;++i) {
+		FILE *f = fopen(file->manifest->entries[i].name, "w+");
+		fwrite(file->files[i], file->manifest->entries[i].size, 1, f);
+		fclose(f);
+	}
 	
+	gjb_file_release(file);
 	fclose(stream);
 	
 	return 0;

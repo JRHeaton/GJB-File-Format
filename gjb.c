@@ -14,6 +14,12 @@ gjb_file_t gjb_file_create(gjb_header_t header, gjb_manifest_t manifest) {
 }
 
 void gjb_file_release(gjb_file_t file) {
+	u_int64_t i;
+	free(file->files);
+	
+	gjb_header_release(file->header);
+	gjb_manifest_release(file->manifest);
+	
 	free(file);
 }
 
@@ -29,7 +35,7 @@ unsigned int gjb_file_write(FILE *stream, gjb_file_t file) {
 	
 	u_int64_t i;
 	for(i=0;i<file->header->entry_count;++i) {
-		size_t write_ret = fwrite(file->files[i], file->manifest->entries[i].size, 1, stream);
+		size_t write_ret = fwrite((void *)file->files[i], file->manifest->entries[i].size, 1, stream);
 		if(!write_ret) return 0;
 	}
 	
@@ -164,13 +170,35 @@ gjb_file_t gjb_file_read(FILE *stream) {
 	return file;
 }
 
-unsigned int gjb_file_add_file(gjb_file_t file, FILE *stream, char *name) {
+char *last_path_component(char *path) {
+	char *current, *sep="/", *correct;
+	for(current = strtok(path, sep); current; current = strtok(NULL, sep)) {
+		correct = current;
+	}
+	
+	return correct;
+}
+
+unsigned int gjb_file_add_file(gjb_file_t file, FILE *stream, char *name, u_int64_t size) {
 	if(!file || !stream || !file->header || !file->manifest || !name) return 0;
 	
-	struct gjb_manifest_entry *entry = gjb_manifest_entry_create(name, (u_int64_t)ftell(stream));
+	unsigned char *data = malloc(size);
+	size_t read_ret = fread(data, size, 1, stream);
+	if(!read_ret) return 0;
+	
 	file->header->entry_count++;
+	struct gjb_manifest_entry *entry = gjb_manifest_entry_create(last_path_component(name), size);
 	gjb_manifest_add_entry(file->manifest, entry, file->header);
 	gjb_manifest_entry_release(entry);
 	
+	u_int64_t a_size = 0, i;
+	for(i=0;i<file->header->entry_count;++i) {
+		a_size += file->manifest->entries[i].size;
+	}
+	
+	file->files = realloc(file->files, a_size);
+	file->files[file->header->entry_count-1] = data;
+	free(data);
+
 	return 1;
 }

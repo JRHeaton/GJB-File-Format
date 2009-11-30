@@ -59,4 +59,4 @@ void gjb_file_release(gjb_file_t file);
 unsigned int gjb_file_write(FILE *stream, gjb_file_t file);
 gjb_file_t gjb_file_read(FILE *stream);
 
-unsigned int gjb_file_add_file(gjb_file_t file, FILE *stream, char *name);
+unsigned int gjb_file_add_file(gjb_file_t file, FILE *stream, char *name, u_int64_t size);
